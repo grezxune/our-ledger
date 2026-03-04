@@ -10,6 +10,7 @@ log:
   - 2026-02-19: Added Auth.js-only auth requirement and financial security architecture constraints
   - 2026-02-19: Implemented MVP scaffold (Auth.js auth, entity routes, invites, ledger transactions, document upload, and super_admin storage setup)
   - 2026-03-03: Hardened auth architecture with Convex custom JWT actor binding, wrapper-based public function authorization, and super_admin enforcement in Convex storage paths
+  - 2026-03-03: Standardized post-submit UX to redirect successful mutations with route-level success toasts and visible state transitions
 ---
 
 ## Problem
@@ -149,6 +150,11 @@ MVP (Phase 1):
   - Never persist raw AWS secret keys in app database logs.
   - Use server-side execution for AWS calls only.
   - Redact sensitive credential fields in all logs and audit events.
+
+### Post-submit UX Feedback (Global)
+- Successful form submissions must always produce visible success feedback through branded, accessible toast notifications.
+- Success paths should redirect to the destination view with a toast signal, then clear ephemeral toast metadata from the URL.
+- Redirect targets must reflect the completed task state (for example, after entity creation, open the created entity view).
 
 Phase 2:
 

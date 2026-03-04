@@ -5,9 +5,10 @@ import { createEntity } from "@/lib/data/entities";
 import { ensureUser } from "@/lib/data/users";
 import { requireAuthSession } from "@/lib/auth/session";
 import { parseEntityAddress } from "@/lib/data/entity-address";
+import { withToast } from "@/lib/navigation/toast";
 
 /**
- * Creates a new entity and redirects to its management page.
+ * Creates a new entity and redirects to the entity overview.
  */
 export async function createEntityAction(formData: FormData): Promise<void> {
   const session = await requireAuthSession();
@@ -26,5 +27,5 @@ export async function createEntityAction(formData: FormData): Promise<void> {
     description: String(formData.get("description") || "").trim() || undefined,
   });
 
-  redirect(`/entity/${entity.id}/manage`);
+  redirect(withToast(`/entity/${entity.id}`, "entity-created"));
 }

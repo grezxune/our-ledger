@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.58] - 2026-03-03
+
+- Added a shared query-driven toast system (`ToastCenter`) inside `AppShell` to provide consistent post-submit success feedback across routes.
+- Introduced typed navigation helpers for toast redirects (`src/lib/navigation/toast.ts`) and standardized toast key/message handling.
+- Updated server-action success redirects across entity creation/update, budget CRUD flows, transaction creation, member invite flows, document upload, dashboard invite acceptance, and super-admin storage validation to include toast metadata.
+- Changed entity creation success navigation to land on the new entity overview (`/entity/[id]`) instead of manage tools, with a creation success toast.
+
 ## [0.2.57] - 2026-03-03
 
 - Hardened Convex authorization by introducing shared wrapper-based guards (`authenticated*` and `superAdmin*`) and applying them across public queries/mutations.

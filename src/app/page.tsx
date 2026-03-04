@@ -10,6 +10,7 @@ import { getAuthSession, requireAuthSession } from "@/lib/auth/session";
 import { listAuditEvents } from "@/lib/data/audit";
 import { listEntitiesForUser } from "@/lib/data/entities";
 import { acceptInvitation, listUserInvitations } from "@/lib/data/invitations";
+import { withToast } from "@/lib/navigation/toast";
 import { ensureUser } from "@/lib/data/users";
 
 async function acceptInviteAction(invitationId: string) {
@@ -22,7 +23,7 @@ async function acceptInviteAction(invitationId: string) {
   }
 
   await acceptInvitation(email, invitationId);
-  redirect("/");
+  redirect(withToast("/", "invitation-accepted"));
 }
 
 /**

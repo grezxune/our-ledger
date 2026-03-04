@@ -3,6 +3,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 mock.module("next/navigation", () => ({
   usePathname: () => "/",
+  useRouter: () => ({
+    replace: () => {},
+  }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 import { AppShell } from "@/components/layout/app-shell";

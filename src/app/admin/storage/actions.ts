@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireSuperAdminSession } from "@/lib/auth/session";
 import { setupStorageInfrastructure } from "@/lib/aws/storage-admin";
 import { upsertStorageConfiguration } from "@/lib/data/storage-config";
+import { withToast } from "@/lib/navigation/toast";
 
 /**
  * Validates AWS credentials and stores non-secret storage configuration.
@@ -38,7 +39,7 @@ export async function configureStorageAction(formData: FormData): Promise<void> 
         String(formData.get("cloudFrontDomain") || "").trim() || result.distributionDomain || undefined,
     });
 
-    redirect(`/admin/storage?status=ok&account=${encodeURIComponent(result.accountId)}`);
+    redirect(withToast(`/admin/storage?status=ok&account=${encodeURIComponent(result.accountId)}`, "storage-configured"));
   } catch {
     redirect("/admin/storage?status=error");
   }

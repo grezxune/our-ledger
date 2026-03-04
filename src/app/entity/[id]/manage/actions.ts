@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireAuthSession } from "@/lib/auth/session";
 import { uploadDocument } from "@/lib/data/documents";
+import { withToast } from "@/lib/navigation/toast";
 
 /**
  * Uploads and stores entity document metadata.
@@ -24,5 +25,5 @@ export async function uploadDocumentAction(entityId: string, formData: FormData)
     sourceTransactionId: String(formData.get("sourceTransactionId") || "").trim() || undefined,
   });
 
-  redirect(`/entity/${entityId}/manage`);
+  redirect(withToast(`/entity/${entityId}/manage`, "document-uploaded"));
 }

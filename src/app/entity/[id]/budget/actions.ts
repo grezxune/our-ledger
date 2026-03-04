@@ -24,6 +24,7 @@ import {
   ADD_EXPENSE_CATEGORY_OPTION,
   ADD_INSTITUTION_OPTION,
 } from "@/lib/domain/expense-form";
+import { withToast } from "@/lib/navigation/toast";
 
 async function requireUserEmail() {
   const session = await requireAuthSession();
@@ -112,7 +113,7 @@ export async function createBudgetAction(entityId: string, formData: FormData): 
     effectiveDate: String(formData.get("effectiveDate") || new Date().toISOString().slice(0, 10)),
   });
 
-  redirect(`/entity/${entityId}/budget`);
+  redirect(withToast(`/entity/${entityId}/budget`, "budget-created"));
 }
 
 /**
@@ -132,7 +133,7 @@ export async function addIncomeSourceAction(entityId: string, budgetId: string, 
     notes: String(formData.get("notes") || "").trim() || undefined,
   });
 
-  redirect(`/entity/${entityId}/budget`);
+  redirect(withToast(`/entity/${entityId}/budget`, "income-source-added"));
 }
 
 /**
@@ -164,7 +165,7 @@ export async function updateIncomeSourceAction(
     await fallbackReplaceIncomeSource(email, entityId, incomeSourceId, payload);
   }
 
-  redirect(`/entity/${entityId}/budget`);
+  redirect(withToast(`/entity/${entityId}/budget`, "income-source-updated"));
 }
 
 /**
@@ -194,7 +195,7 @@ export async function addRecurringExpenseAction(entityId: string, budgetId: stri
     notes: String(formData.get("notes") || "").trim() || undefined,
   });
 
-  redirect(`/entity/${entityId}/budget`);
+  redirect(withToast(`/entity/${entityId}/budget`, "recurring-expense-added"));
 }
 
 /**
@@ -308,7 +309,7 @@ export async function createBudgetExpenseCategoryAction(
 export async function removeIncomeSourceAction(entityId: string, incomeSourceId: string): Promise<void> {
   const email = await requireUserEmail();
   await removeBudgetIncomeSource(email, incomeSourceId);
-  redirect(`/entity/${entityId}/budget`);
+  redirect(withToast(`/entity/${entityId}/budget`, "income-source-removed"));
 }
 
 /**
@@ -350,7 +351,7 @@ export async function updateRecurringExpenseAction(
     await fallbackReplaceRecurringExpense(email, entityId, recurringExpenseId, payload);
   }
 
-  redirect(`/entity/${entityId}/budget`);
+  redirect(withToast(`/entity/${entityId}/budget`, "recurring-expense-updated"));
 }
 
 /**
@@ -359,5 +360,5 @@ export async function updateRecurringExpenseAction(
 export async function removeRecurringExpenseAction(entityId: string, recurringExpenseId: string): Promise<void> {
   const email = await requireUserEmail();
   await removeBudgetRecurringExpense(email, recurringExpenseId);
-  redirect(`/entity/${entityId}/budget`);
+  redirect(withToast(`/entity/${entityId}/budget`, "recurring-expense-removed"));
 }

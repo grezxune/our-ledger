@@ -6,6 +6,7 @@ import { createEntityExpenseCategory, listEntityExpenseCategories } from "@/lib/
 import { isDuplicateExpenseCategoryError } from "@/lib/data/expense-category-errors";
 import { createTransaction } from "@/lib/data/ledger";
 import { ADD_EXPENSE_CATEGORY_OPTION } from "@/lib/domain/expense-form";
+import { withToast } from "@/lib/navigation/toast";
 
 /**
  * Adds manual ledger entries for one-off and recurring workflows.
@@ -52,7 +53,7 @@ export async function createTransactionAction(entityId: string, formData: FormDa
         : undefined,
   });
 
-  redirect(`/entity/${entityId}/transactions`);
+  redirect(withToast(`/entity/${entityId}/transactions`, "transaction-created"));
 }
 
 /**

@@ -25,6 +25,7 @@ log:
   - 2026-02-26: Standardized shared select behavior to use body-portal overlays with viewport-aware flipping/clamping and keyboard typeahead matching.
   - 2026-02-26: Added responsive recurring-planned-expense mobile fallback layouts to prevent horizontal overflow and keep creation/edit actions usable on small screens.
   - 2026-02-26: Brought planned-income responsive behavior into parity with recurring-expense patterns (stacked mobile rows/forms + compact desktop table rows).
+  - 2026-03-03: Added requirement that all successful budget mutations redirect with success toasts for explicit confirmation and form reset behavior.
 ---
 
 ## Problem
@@ -173,6 +174,7 @@ Core journeys:
   - no budget created
   - budget with zero items
   - invalid amount/cadence
+- All successful budget actions (create/update/remove) must redirect with success toast metadata so users receive confirmation and forms reset cleanly.
 - Include entity navigation with dedicated sections for:
   - Budget
   - Transactions

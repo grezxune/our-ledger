@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Session } from "next-auth";
 import { PrimaryHeader } from "@/components/layout/primary-header";
+import { ToastCenter } from "@/components/ui/toast-center";
 
 interface AppShellProps {
   session: Session | null;
@@ -16,6 +17,7 @@ export function AppShell({ session, children }: AppShellProps) {
 
   return (
     <main className="min-h-screen px-4 py-6 sm:px-8 sm:py-8">
+      <ToastCenter />
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
         <PrimaryHeader
           email={session?.user?.email}

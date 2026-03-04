@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireAuthSession } from "@/lib/auth/session";
 import { getEntityForUser } from "@/lib/data/entities";
 import { createInvitation, revokeInvitation } from "@/lib/data/invitations";
+import { withToast } from "@/lib/navigation/toast";
 
 /**
  * Creates owner-issued entity invitations.
@@ -22,7 +23,7 @@ export async function createInvitationAction(entityId: string, formData: FormDat
     (formData.get("role") as "owner" | "user") || "user",
   );
 
-  redirect(`/entity/${entityId}/members`);
+  redirect(withToast(`/entity/${entityId}/members`, "invitation-created"));
 }
 
 /**
@@ -37,5 +38,5 @@ export async function revokeInvitationAction(entityId: string, invitationId: str
 
   await getEntityForUser(email, entityId);
   await revokeInvitation(email, invitationId);
-  redirect(`/entity/${entityId}/members`);
+  redirect(withToast(`/entity/${entityId}/members`, "invitation-revoked"));
 }
