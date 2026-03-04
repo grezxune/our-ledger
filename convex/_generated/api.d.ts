@@ -43,6 +43,7 @@ import type * as ledger_mutations from "../ledger/mutations.js";
 import type * as ledger_queries from "../ledger/queries.js";
 import type * as lib_audit from "../lib/audit.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_authFunctions from "../lib/authFunctions.js";
 import type * as lib_entityAddress from "../lib/entityAddress.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_time from "../lib/time.js";
@@ -97,6 +98,7 @@ declare const fullApi: ApiFromModules<{
   "ledger/queries": typeof ledger_queries;
   "lib/audit": typeof lib_audit;
   "lib/auth": typeof lib_auth;
+  "lib/authFunctions": typeof lib_authFunctions;
   "lib/entityAddress": typeof lib_entityAddress;
   "lib/permissions": typeof lib_permissions;
   "lib/time": typeof lib_time;

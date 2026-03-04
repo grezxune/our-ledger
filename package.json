@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "bun test",
     "convex:dev": "bunx convex dev",
-    "convex:deploy": "bunx convex deploy --prod"
+    "convex:deploy": "CONVEX_DEPLOYMENT=prod:adorable-rat-305 bunx convex deploy -y"
   },
   "dependencies": {
     "@aws-sdk/client-cloudfront": "^3.993.0",

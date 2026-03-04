@@ -2,7 +2,7 @@ import type { GenericValidator, ObjectType, PropertyValidators } from "convex/va
 import { mutation, query } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { requireAuth, requireAuthenticatedUserId, requirePremium, requireSuperAdminByUserId } from "./auth";
+import { requireAuthIdentity, requireAuthenticatedUserId, requirePremium, requireSuperAdminByUserId } from "./auth";
 
 type UserScopedArgValidators = PropertyValidators & {
   userId: GenericValidator;
@@ -50,7 +50,7 @@ export function authenticatedIdentityQuery<ArgsValidator extends PropertyValidat
   return query({
     args: definition.args as never,
     handler: (async (ctx: QueryCtx, args: ObjectType<ArgsValidator>) => {
-      await requireAuth(ctx);
+      await requireAuthIdentity(ctx);
       return definition.handler(ctx, args);
     }) as never,
   } as never);
@@ -62,7 +62,7 @@ export function authenticatedIdentityMutation<ArgsValidator extends PropertyVali
   return mutation({
     args: definition.args as never,
     handler: (async (ctx: MutationCtx, args: ObjectType<ArgsValidator>) => {
-      await requireAuth(ctx);
+      await requireAuthIdentity(ctx);
       return definition.handler(ctx, args);
     }) as never,
   } as never);
