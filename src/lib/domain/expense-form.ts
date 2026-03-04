@@ -32,3 +32,11 @@ export function buildNamedEntityOptions(
 export function hasRealSelection(total: number, selectedValue: string, sentinelValue: string): boolean {
   return total > 0 && selectedValue !== sentinelValue;
 }
+
+/**
+ * Parses a checkbox form field into a boolean value.
+ */
+export function parseCheckboxValue(formData: FormData, key: string): boolean {
+  const value = formData.get(key);
+  return value === "on" || value === "true" || value === "1";
+}

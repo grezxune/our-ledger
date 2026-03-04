@@ -216,6 +216,14 @@ export function RecurringExpensePlanner({
             type="number"
           />
         </div>
+        <label className="inline-flex items-center gap-2 text-sm font-medium text-foreground/90">
+          <input
+            className="size-4 rounded border border-line bg-surface accent-accent"
+            name="autoPay"
+            type="checkbox"
+          />
+          <span>Auto Pay</span>
+        </label>
         <InputField label="Notes" name="notes" placeholder="Notes (optional)" />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-foreground/75">
@@ -289,7 +297,7 @@ export function RecurringExpensePlanner({
                   value={selectedAccountId}
                 />
               </td>
-              <td className="w-[15%] px-1 py-1.5">
+              <td className="w-[12%] px-1 py-1.5">
                 <InputField
                   className={inlineInputClass}
                   cornerStyle="none"
@@ -304,7 +312,7 @@ export function RecurringExpensePlanner({
                   type="number"
                 />
               </td>
-              <td className="w-[15%] px-1 py-1.5">
+              <td className="w-[12%] px-1 py-1.5">
                 <SelectField
                   className={inlineSelectClass}
                   cornerStyle="none"
@@ -315,6 +323,17 @@ export function RecurringExpensePlanner({
                   name="cadence"
                   options={[...BUDGET_PERIOD_OPTIONS]}
                 />
+              </td>
+              <td className="w-[10%] px-1 py-1.5">
+                <label className="inline-flex h-8 items-center gap-2 text-xs font-medium text-foreground/85">
+                  <input
+                    className="size-4 rounded border border-line bg-surface accent-accent"
+                    form="add-recurring-expense-form"
+                    name="autoPay"
+                    type="checkbox"
+                  />
+                  <span>Auto Pay</span>
+                </label>
               </td>
               <td className="w-10 px-1 py-1.5 pr-0">
                 <div className="flex justify-end">
@@ -332,7 +351,7 @@ export function RecurringExpensePlanner({
               </td>
             </tr>
             <tr className="border-b border-line/50">
-              <td className="px-1 pb-1.5" colSpan={6}>
+              <td className="px-1 pb-1.5" colSpan={7}>
                 <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                   <InputField
                     className={`${inlineInputClass} text-xs`}

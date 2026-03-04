@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { buildNamedEntityOptions, hasRealSelection } from "@/lib/domain/expense-form";
+import { buildNamedEntityOptions, hasRealSelection, parseCheckboxValue } from "@/lib/domain/expense-form";
 
 describe("expense form helpers", () => {
   it("builds fallback option when collection is empty", () => {
@@ -30,5 +30,19 @@ describe("expense form helpers", () => {
     expect(hasRealSelection(0, "__add__", "__add__")).toBe(false);
     expect(hasRealSelection(2, "__add__", "__add__")).toBe(false);
     expect(hasRealSelection(2, "cat_1", "__add__")).toBe(true);
+  });
+
+  it("parses checkbox values to booleans", () => {
+    const formData = new FormData();
+    expect(parseCheckboxValue(formData, "autoPay")).toBe(false);
+
+    formData.set("autoPay", "on");
+    expect(parseCheckboxValue(formData, "autoPay")).toBe(true);
+
+    formData.set("autoPay", "false");
+    expect(parseCheckboxValue(formData, "autoPay")).toBe(false);
+
+    formData.set("autoPay", "1");
+    expect(parseCheckboxValue(formData, "autoPay")).toBe(true);
   });
 });

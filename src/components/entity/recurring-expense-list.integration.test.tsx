@@ -29,6 +29,7 @@ describe("recurring expense list", () => {
             categoryId: "category_1",
             amountCents: 240000,
             cadence: "monthly",
+            autoPay: true,
             category: "Housing",
             paidFromAccount: {
               id: "account_1",
@@ -47,6 +48,7 @@ describe("recurring expense list", () => {
     expect(html).toContain("Rent");
     expect(html).toContain("Housing");
     expect(html).toContain("Main Checking");
+    expect(html).toContain("Auto Pay: Enabled");
     expect(html).toContain("Open actions for recurring expense Rent");
     expect(html).toContain("$2,400.00");
   });

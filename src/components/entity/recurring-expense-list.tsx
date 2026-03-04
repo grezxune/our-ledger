@@ -111,6 +111,7 @@ export function RecurringExpenseList({
                     <p className="text-xs text-foreground/75">Category: {item.category || "Uncategorized"}</p>
                     <p className="text-xs text-foreground/75">Account: {item.paidFromAccount?.name || "Unassigned"}</p>
                     <p className="text-xs text-foreground/75">Cadence: {toCadenceLabel(item.cadence)}</p>
+                    <p className="text-xs text-foreground/75">Auto Pay: {item.autoPay ? "Enabled" : "Disabled"}</p>
                     <p className="text-xs font-medium text-foreground/90">{formatIncomeCurrency(item.amountCents, currency)}</p>
                     {item.notes ? <p className="text-xs text-foreground/70">{item.notes}</p> : null}
                   </div>
@@ -144,11 +145,12 @@ export function RecurringExpenseList({
             <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="border-b border-line/60 text-left text-xs uppercase tracking-[0.08em] text-foreground/70">
-                  <th className="w-[28%] py-2 pr-2">Expense</th>
-                  <th className="w-[16%] py-2 pr-2">Category</th>
-                  <th className="w-[16%] py-2 pr-2">Account</th>
-                  <th className="w-[16%] py-2 pr-2">Amount</th>
-                  <th className="w-[16%] py-2 pr-2">Cadence</th>
+                  <th className="w-[24%] py-2 pr-2">Expense</th>
+                  <th className="w-[14%] py-2 pr-2">Category</th>
+                  <th className="w-[14%] py-2 pr-2">Account</th>
+                  <th className="w-[12%] py-2 pr-2">Amount</th>
+                  <th className="w-[12%] py-2 pr-2">Cadence</th>
+                  <th className="w-[14%] py-2 pr-2">Auto Pay</th>
                   <th className="w-10 py-2 pr-0 text-right">
                     <span className="sr-only">Row actions</span>
                   </th>
@@ -165,6 +167,9 @@ export function RecurringExpenseList({
                     <td className="py-2 pr-2 text-foreground/85">{item.paidFromAccount?.name || "Unassigned"}</td>
                     <td className="py-2 pr-2">{formatIncomeCurrency(item.amountCents, currency)}</td>
                     <td className="py-2 pr-2">{toCadenceLabel(item.cadence)}</td>
+                    <td className="py-2 pr-2">
+                      <span className="text-xs text-foreground/85">{item.autoPay ? "Enabled" : "Disabled"}</span>
+                    </td>
                     <td className="w-10 py-2 pr-0">
                       <div className="flex justify-end">
                         <ActionMenu
@@ -237,6 +242,15 @@ export function RecurringExpenseList({
                 options={[...BUDGET_PERIOD_OPTIONS]}
               />
             </div>
+            <label className="inline-flex items-center gap-2 text-sm font-medium text-foreground/90">
+              <input
+                className="size-4 rounded border border-line bg-surface accent-accent"
+                defaultChecked={editingRecurringExpense.autoPay}
+                name="autoPay"
+                type="checkbox"
+              />
+              <span>Auto Pay</span>
+            </label>
             <TextareaField defaultValue={editingRecurringExpense.notes || ""} label="Notes" name="notes" rows={2} />
             {!canSubmitEdit ? (
               <p className="text-sm text-red-500">Add at least one account and expense category before saving changes.</p>

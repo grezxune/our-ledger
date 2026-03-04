@@ -117,6 +117,7 @@ export default defineSchema({
     name: v.string(),
     amountCents: v.number(),
     cadence: budgetPeriodValidator,
+    autoPay: v.optional(v.boolean()),
     category: v.optional(v.string()),
     notes: v.optional(v.string()),
     createdByUserId: v.id("users"),

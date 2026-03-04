@@ -29,6 +29,7 @@ function mapRecurringExpense(item: Doc<"budgetRecurringExpenses">) {
     name: item.name,
     amountCents: item.amountCents,
     cadence: item.cadence,
+    autoPay: item.autoPay ?? false,
     category: item.category,
     notes: item.notes,
     createdAt: item.createdAt,

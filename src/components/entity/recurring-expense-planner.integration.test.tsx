@@ -21,6 +21,7 @@ describe("recurring expense planner", () => {
     expect(html).toContain("Add category to continue");
     expect(html).toContain("Expense category");
     expect(html).toContain("Paid from account");
+    expect(html).toContain("Auto Pay");
     expect(html).toContain("Notes (optional)");
     expect(html).not.toContain('aria-label="Add category"');
     expect(html).not.toContain('aria-label="Add account"');
@@ -30,7 +31,15 @@ describe("recurring expense planner", () => {
     const html = renderToStaticMarkup(
       <RecurringExpensePlanner
         accounts={[
-          { id: "acct_1", name: "Checking", currency: "USD", source: "manual" },
+          {
+            id: "acct_1",
+            entityId: "entity_1",
+            name: "Checking",
+            currency: "USD",
+            source: "manual",
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-01T00:00:00.000Z",
+          },
         ]}
         addRecurringExpenseAction={async () => {}}
         createAccountAction={async () => ({ id: "acct_2", name: "Savings", source: "manual" })}

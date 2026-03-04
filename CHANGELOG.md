@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.61] - 2026-03-04
+
+- Added recurring planned expense `Auto Pay` support end-to-end so each expense can be marked as automatically pulled or manual.
+- Persisted `autoPay` in Convex recurring-expense create/update flows, included it in recurring-expense query mapping, and added audit metadata for `autoPay` changes.
+- Updated recurring planned expense create/edit UI (mobile and desktop) to include an `Auto Pay` checkbox and surfaced the saved state in list rows.
+- Added unit/integration coverage for checkbox parsing and recurring expense rendering with `Auto Pay` state.
+
 ## [0.2.60] - 2026-03-04
 
 - Completed the app-wide migration away from route-level server actions to live Convex client patterns: dashboard invite acceptance, entity overview, audits index/detail, and super-admin storage configuration now run through reactive queries plus client-side submission/mutation flows.

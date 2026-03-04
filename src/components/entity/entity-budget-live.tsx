@@ -9,7 +9,12 @@ import type { OptimisticLocalStore } from "convex/browser";
 import { EntityBudgetLiveView } from "@/components/entity/entity-budget-live-view";
 import { useAuthUser } from "@/hooks/use-auth-user";
 import { calculateBudgetSummary } from "@/lib/budget/math";
-import { ADD_ACCOUNT_OPTION, ADD_EXPENSE_CATEGORY_OPTION, ADD_INSTITUTION_OPTION } from "@/lib/domain/expense-form";
+import {
+  ADD_ACCOUNT_OPTION,
+  ADD_EXPENSE_CATEGORY_OPTION,
+  ADD_INSTITUTION_OPTION,
+  parseCheckboxValue,
+} from "@/lib/domain/expense-form";
 import type { BudgetPeriod, EntityAccount, EntityBudget } from "@/lib/domain/types";
 import type { ToastKey } from "@/lib/navigation/toast";
 import { withToast } from "@/lib/navigation/toast";
@@ -51,6 +56,7 @@ interface AddRecurringExpenseArgs {
     name: string;
     amountCents: number;
     cadence: BudgetPeriod;
+    autoPay?: boolean;
     accountId?: Id<"entityAccounts">;
     categoryId: Id<"entityExpenseCategories">;
     notes?: string;
@@ -216,6 +222,7 @@ export function EntityBudgetLive({ entityId, currency }: EntityBudgetLiveProps) 
               updatedAt: now,
               category: budget.recurringExpenses.find((item) => item.categoryId === typedArgs.input.categoryId)?.category,
               ...typedArgs.input,
+              autoPay: typedArgs.input.autoPay ?? false,
             },
           ],
         });
@@ -290,10 +297,11 @@ export function EntityBudgetLive({ entityId, currency }: EntityBudgetLiveProps) 
     const amount = Number(formData.get("amount") || 0);
     const accountId = String(formData.get("accountId") || "").trim();
     const categoryId = String(formData.get("categoryId") || "").trim();
+    const autoPay = parseCheckboxValue(formData, "autoPay");
     if (!Number.isFinite(amount) || amount <= 0) throw new Error("Recurring expense amount must be greater than zero.");
     if (!accountId || accountId === ADD_ACCOUNT_OPTION) throw new Error("Please select a valid paid-from account.");
     if (!categoryId || categoryId === ADD_EXPENSE_CATEGORY_OPTION) throw new Error("Please select a valid expense category.");
-    await addRecurringExpense({ userId: requireUserId(), budgetId: activeBudget.id as Id<"entityBudgets">, input: { name: String(formData.get("name") || "Recurring Expense").trim(), amountCents: Math.round(amount * 100), cadence: (formData.get("cadence") as "weekly" | "monthly" | "yearly") || "monthly", accountId: accountId as Id<"entityAccounts">, categoryId: categoryId as Id<"entityExpenseCategories">, notes: String(formData.get("notes") || "").trim() || undefined } });
+    await addRecurringExpense({ userId: requireUserId(), budgetId: activeBudget.id as Id<"entityBudgets">, input: { name: String(formData.get("name") || "Recurring Expense").trim(), amountCents: Math.round(amount * 100), cadence: (formData.get("cadence") as "weekly" | "monthly" | "yearly") || "monthly", autoPay, accountId: accountId as Id<"entityAccounts">, categoryId: categoryId as Id<"entityExpenseCategories">, notes: String(formData.get("notes") || "").trim() || undefined } });
     showToast("recurring-expense-added");
   }, [activeBudget, addRecurringExpense, requireUserId, showToast]);
 
@@ -301,10 +309,11 @@ export function EntityBudgetLive({ entityId, currency }: EntityBudgetLiveProps) 
     const amount = Number(formData.get("amount") || 0);
     const accountId = String(formData.get("accountId") || "").trim();
     const categoryId = String(formData.get("categoryId") || "").trim();
+    const autoPay = parseCheckboxValue(formData, "autoPay");
     if (!Number.isFinite(amount) || amount <= 0) throw new Error("Recurring expense amount must be greater than zero.");
     if (!accountId || accountId === ADD_ACCOUNT_OPTION) throw new Error("Please select a valid paid-from account.");
     if (!categoryId || categoryId === ADD_EXPENSE_CATEGORY_OPTION) throw new Error("Please select a valid expense category.");
-    const payload = { name: String(formData.get("name") || "Recurring Expense").trim(), amountCents: Math.round(amount * 100), cadence: (formData.get("cadence") as "weekly" | "monthly" | "yearly") || "monthly", accountId: accountId as Id<"entityAccounts">, categoryId: categoryId as Id<"entityExpenseCategories">, notes: String(formData.get("notes") || "").trim() || undefined };
+    const payload = { name: String(formData.get("name") || "Recurring Expense").trim(), amountCents: Math.round(amount * 100), cadence: (formData.get("cadence") as "weekly" | "monthly" | "yearly") || "monthly", autoPay, accountId: accountId as Id<"entityAccounts">, categoryId: categoryId as Id<"entityExpenseCategories">, notes: String(formData.get("notes") || "").trim() || undefined };
     try {
       await updateRecurringExpense({ userId: requireUserId(), recurringExpenseId: recurringExpenseId as Id<"budgetRecurringExpenses">, input: payload });
     } catch (error) {

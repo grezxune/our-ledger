@@ -86,6 +86,7 @@ export async function addBudgetRecurringExpense(
     name: string;
     amountCents: number;
     cadence: BudgetPeriod;
+    autoPay?: boolean;
     accountId?: string;
     categoryId: string;
     notes?: string;
@@ -115,6 +116,7 @@ export async function updateBudgetRecurringExpense(
     name: string;
     amountCents: number;
     cadence: BudgetPeriod;
+    autoPay?: boolean;
     accountId: string;
     categoryId: string;
     notes?: string;

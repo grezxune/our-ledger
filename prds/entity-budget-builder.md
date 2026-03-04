@@ -28,6 +28,7 @@ log:
   - 2026-03-03: Added requirement that all successful budget mutations redirect with success toasts for explicit confirmation and form reset behavior.
   - 2026-03-04: Replaced redirect-after-save requirement for in-place budget edits with reactive Convex queries and optimistic client mutations for immediate visual updates.
   - 2026-03-04: Aligned with app-wide architecture guardrails that prohibit reintroducing route-level server-action mutation handlers.
+  - 2026-03-04: Added recurring planned expense `autoPay` toggle support so users can mark expenses that are automatically pulled each cycle.
 ---
 
 ## Problem
@@ -116,6 +117,7 @@ Core journeys:
 - Optional fields:
   - `cadence` (`weekly`, `monthly`, `yearly`)
   - `category` (entity-defined or default taxonomy)
+  - `autoPay` (boolean; defaults to `false`) to denote whether the expense is automatically pulled on its cadence
   - `notes`
 - Inline category creation from planning forms must handle duplicate-name submissions gracefully (no uncaught runtime error) and return users to the budget workflow.
 - Inline category/institution/account creation from planning modals must update options in place without a full-page refresh so unsaved form inputs remain intact.
@@ -225,6 +227,7 @@ Core journeys:
   - `amountCents: v.number()`
   - `cadence: v.union(v.literal("weekly"), v.literal("monthly"), v.literal("yearly"))`
   - `normalizedAmountCents: v.number()`
+  - `autoPay: v.optional(v.boolean())` (backward-compatible in schema, treated as `false` when omitted)
   - `category: v.optional(v.string())`
   - Indexes: `by_budgetId`, `by_entityId`, `by_entityId_category`
 

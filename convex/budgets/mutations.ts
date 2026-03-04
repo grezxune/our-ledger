@@ -24,6 +24,7 @@ const recurringExpenseInputValidator = v.object({
   name: v.string(),
   amountCents: v.number(),
   cadence: budgetPeriodValidator,
+  autoPay: v.optional(v.boolean()),
   accountId: v.optional(v.id("entityAccounts")),
   categoryId: v.id("entityExpenseCategories"),
   notes: v.optional(v.string()),
@@ -144,6 +145,7 @@ export const addRecurringExpense = authenticatedMutation({
       budgetId: args.budgetId,
       entityId: budget.entityId,
       ...args.input,
+      autoPay: args.input.autoPay ?? false,
       category: expenseCategory.name,
       name: args.input.name.trim(),
       createdByUserId: args.userId,
@@ -162,6 +164,7 @@ export const addRecurringExpense = authenticatedMutation({
         recurringExpenseId: String(lineId),
         expenseCategoryId: String(args.input.categoryId),
         category: expenseCategory.name,
+        autoPay: String(args.input.autoPay ?? false),
       },
     });
 

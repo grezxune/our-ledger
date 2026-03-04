@@ -103,6 +103,7 @@ export interface BudgetRecurringExpense {
   name: string;
   amountCents: number;
   cadence: BudgetPeriod;
+  autoPay: boolean;
   category?: string;
   notes?: string;
   paidFromAccount?: {
