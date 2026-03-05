@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
@@ -9,13 +9,14 @@ import type { OptimisticLocalStore } from "convex/browser";
 import { EntityBudgetLiveView } from "@/components/entity/entity-budget-live-view";
 import { useAuthUser } from "@/hooks/use-auth-user";
 import { calculateBudgetSummary } from "@/lib/budget/math";
+import { getCurrentMonthKey, isMonthKey } from "@/lib/budget/monthly";
 import {
   ADD_ACCOUNT_OPTION,
   ADD_EXPENSE_CATEGORY_OPTION,
   ADD_INSTITUTION_OPTION,
   parseCheckboxValue,
 } from "@/lib/domain/expense-form";
-import type { BudgetPeriod, EntityAccount, EntityBudget } from "@/lib/domain/types";
+import type { BudgetMonthlySnapshot, BudgetPeriod, EntityAccount, EntityBudget } from "@/lib/domain/types";
 import type { ToastKey } from "@/lib/navigation/toast";
 import { withToast } from "@/lib/navigation/toast";
 
@@ -127,6 +128,15 @@ export function EntityBudgetLive({ entityId, currency }: EntityBudgetLiveProps) 
     [expenseCategoriesQuery],
   );
   const activeBudget = budgets.find((budget) => budget.status === "active") || budgets[0] || null;
+  const [snapshotMonth, setSnapshotMonth] = useState(() => getCurrentMonthKey());
+  const monthlySnapshotQueryArgs = useMemo(() => {
+    if (!activeBudget) {
+      return "skip";
+    }
+    return authArgs({ budgetId: activeBudget.id as Id<"entityBudgets">, month: snapshotMonth });
+  }, [activeBudget, authArgs, snapshotMonth]);
+  const monthlySnapshotQuery = useQuery(api.budgets.queries.getMonthlySnapshot, monthlySnapshotQueryArgs);
+  const monthlySnapshot = monthlySnapshotQuery as BudgetMonthlySnapshot | undefined;
 
   const showToast = useCallback(
     (toast: ToastKey) => {
@@ -249,6 +259,10 @@ export function EntityBudgetLive({ entityId, currency }: EntityBudgetLiveProps) 
 
   const updateIncomeSource = useMutation(api.budgets.incomeMutations.updateIncomeSource);
   const updateRecurringExpense = useMutation(api.budgets.incomeMutations.updateRecurringExpense);
+  const addUnplannedIncomeSource = useMutation(api.budgets.mutations.addUnplannedIncomeSource);
+  const removeUnplannedIncomeSource = useMutation(api.budgets.mutations.removeUnplannedIncomeSource);
+  const upsertCreditCardReconciliation = useMutation(api.budgets.mutations.upsertCreditCardReconciliation);
+  const removeCreditCardReconciliation = useMutation(api.budgets.mutations.removeCreditCardReconciliation);
   const createAccount = useMutation(api.accounts.mutations.create);
   const createInstitution = useMutation(api.institutions.mutations.create);
   const createExpenseCategory = useMutation(api.expenseCategories.mutations.create);
@@ -331,6 +345,70 @@ export function EntityBudgetLive({ entityId, currency }: EntityBudgetLiveProps) 
     showToast("recurring-expense-removed");
   }, [removeRecurringExpense, requireUserId, showToast]);
 
+  const setSnapshotMonthAction = useCallback((month: string) => {
+    if (!isMonthKey(month)) {
+      return;
+    }
+    setSnapshotMonth(month);
+  }, []);
+
+  const addUnplannedIncomeSourceAction = useCallback(async (formData: FormData) => {
+    if (!activeBudget) throw new Error("Budget not found.");
+    const month = String(formData.get("month") || snapshotMonth).trim();
+    const amount = Number(formData.get("amount") || 0);
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error("Income amount must be greater than zero.");
+    await addUnplannedIncomeSource({
+      userId: requireUserId(),
+      budgetId: activeBudget.id as Id<"entityBudgets">,
+      input: {
+        month,
+        name: String(formData.get("name") || "Unplanned Income").trim(),
+        amountCents: Math.round(amount * 100),
+        notes: String(formData.get("notes") || "").trim() || undefined,
+      },
+    });
+    showToast("unplanned-income-added");
+  }, [activeBudget, addUnplannedIncomeSource, requireUserId, showToast, snapshotMonth]);
+
+  const removeUnplannedIncomeSourceAction = useCallback(async (unplannedIncomeSourceId: string) => {
+    await removeUnplannedIncomeSource({
+      userId: requireUserId(),
+      unplannedIncomeSourceId: unplannedIncomeSourceId as Id<"budgetUnplannedIncomeSources">,
+    });
+    showToast("unplanned-income-removed");
+  }, [removeUnplannedIncomeSource, requireUserId, showToast]);
+
+  const upsertCreditCardReconciliationAction = useCallback(async (formData: FormData) => {
+    if (!activeBudget) throw new Error("Budget not found.");
+    const month = String(formData.get("month") || snapshotMonth).trim();
+    const accountId = String(formData.get("accountId") || "").trim();
+    const statementBalance = Number(formData.get("statementBalance") || 0);
+    const ledgerBalance = Number(formData.get("ledgerBalance") || 0);
+    if (!accountId) throw new Error("Please choose an account.");
+    if (!Number.isFinite(statementBalance)) throw new Error("Statement balance must be a valid number.");
+    if (!Number.isFinite(ledgerBalance)) throw new Error("Ledger balance must be a valid number.");
+    await upsertCreditCardReconciliation({
+      userId: requireUserId(),
+      budgetId: activeBudget.id as Id<"entityBudgets">,
+      input: {
+        month,
+        accountId: accountId as Id<"entityAccounts">,
+        statementBalanceCents: Math.round(statementBalance * 100),
+        ledgerBalanceCents: Math.round(ledgerBalance * 100),
+        notes: String(formData.get("notes") || "").trim() || undefined,
+      },
+    });
+    showToast("credit-reconciliation-saved");
+  }, [activeBudget, requireUserId, showToast, snapshotMonth, upsertCreditCardReconciliation]);
+
+  const removeCreditCardReconciliationAction = useCallback(async (creditCardReconciliationId: string) => {
+    await removeCreditCardReconciliation({
+      userId: requireUserId(),
+      creditCardReconciliationId: creditCardReconciliationId as Id<"budgetCreditCardReconciliations">,
+    });
+    showToast("credit-reconciliation-removed");
+  }, [removeCreditCardReconciliation, requireUserId, showToast]);
+
   const createAccountAction = useCallback(async (formData: FormData) => {
     const source = (formData.get("source") as "manual" | "plaid") || "manual";
     const institutionId = String(formData.get("institutionId") || "").trim();
@@ -372,6 +450,7 @@ export function EntityBudgetLive({ entityId, currency }: EntityBudgetLiveProps) 
     <EntityBudgetLiveView
       accounts={accounts}
       addIncomeSourceAction={addIncomeSourceAction}
+      addUnplannedIncomeSourceAction={addUnplannedIncomeSourceAction}
       addRecurringExpenseAction={addRecurringExpenseAction}
       budgets={budgets}
       createAccountAction={createAccountAction}
@@ -381,8 +460,14 @@ export function EntityBudgetLive({ entityId, currency }: EntityBudgetLiveProps) 
       currency={currency}
       expenseCategories={expenseCategories}
       institutions={institutions}
+      monthlySnapshot={monthlySnapshot}
+      removeCreditCardReconciliationAction={removeCreditCardReconciliationAction}
       removeIncomeSourceAction={removeIncomeSourceAction}
       removeRecurringExpenseAction={removeRecurringExpenseAction}
+      removeUnplannedIncomeSourceAction={removeUnplannedIncomeSourceAction}
+      setSnapshotMonthAction={setSnapshotMonthAction}
+      snapshotMonth={snapshotMonth}
+      upsertCreditCardReconciliationAction={upsertCreditCardReconciliationAction}
       updateIncomeSourceAction={updateIncomeSourceAction}
       updateRecurringExpenseAction={updateRecurringExpenseAction}
     />

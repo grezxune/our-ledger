@@ -5,6 +5,8 @@ describe("navigation toast helpers", () => {
   it("maps known toast keys to user-facing copy", () => {
     expect(getToastMessage("entity-created")).toBe("Entity created.");
     expect(getToastMessage("transaction-created")).toBe("Transaction saved.");
+    expect(getToastMessage("unplanned-income-added")).toBe("Unplanned income source added.");
+    expect(getToastMessage("credit-reconciliation-saved")).toBe("Credit card reconciliation saved.");
     expect(getToastMessage("storage-configured")).toBe("Storage configuration validated.");
   });
 

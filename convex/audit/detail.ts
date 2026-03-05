@@ -28,6 +28,8 @@ const METADATA_REFERENCE_TABLES: Record<string, TableNames> = {
   expenseCategoryId: "entityExpenseCategories",
   incomeSourceId: "budgetIncomeSources",
   recurringExpenseId: "budgetRecurringExpenses",
+  unplannedIncomeSourceId: "budgetUnplannedIncomeSources",
+  creditCardReconciliationId: "budgetCreditCardReconciliations",
   transactionId: "transactions",
   sourceTransactionId: "transactions",
   invitationId: "invitations",
@@ -43,6 +45,8 @@ function resolveTargetTable(action: string): TableNames | null {
   if (action === "budget.created") return "entityBudgets";
   if (action.startsWith("budget.income_source_")) return "budgetIncomeSources";
   if (action.startsWith("budget.recurring_expense_")) return "budgetRecurringExpenses";
+  if (action.startsWith("budget.unplanned_income_")) return "budgetUnplannedIncomeSources";
+  if (action.startsWith("budget.credit_card_reconciliation_")) return "budgetCreditCardReconciliations";
   if (action.startsWith("invitation.")) return "invitations";
   if (action.startsWith("document.")) return "documents";
   if (action.startsWith("storage.config.")) return "storageConfigurations";

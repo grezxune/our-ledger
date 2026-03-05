@@ -115,6 +115,33 @@ export interface BudgetRecurringExpense {
   updatedAt: string;
 }
 
+export interface BudgetUnplannedIncomeSource {
+  id: string;
+  budgetId: string;
+  entityId: string;
+  month: string;
+  name: string;
+  amountCents: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BudgetCreditCardReconciliation {
+  id: string;
+  budgetId: string;
+  entityId: string;
+  month: string;
+  accountId: string;
+  accountName: string;
+  statementBalanceCents: number;
+  ledgerBalanceCents: number;
+  reconciliationGapCents: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface EntityBudgetSummary {
   projectedIncomeCents: number;
   projectedExpenseCents: number;
@@ -133,6 +160,24 @@ export interface EntityBudget {
   recurringExpenses: BudgetRecurringExpense[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BudgetMonthlySnapshot {
+  month: string;
+  expectedIncomeCents: number;
+  expectedExpenseCents: number;
+  expectedRemainingCents: number;
+  actualIncomeCents: number;
+  actualExpenseCents: number;
+  actualRemainingCents: number;
+  incomeVarianceCents: number;
+  expenseVarianceCents: number;
+  remainingVarianceCents: number;
+  unplannedIncomeCents: number;
+  unplannedIncomeSources: BudgetUnplannedIncomeSource[];
+  creditCardReconciliations: BudgetCreditCardReconciliation[];
+  reconciledCardCount: number;
+  totalReconciliationGapCents: number;
 }
 
 export interface EntityAccount {

@@ -6,6 +6,7 @@ import { recordAuditEvent } from "../lib/audit";
 import { requireMembership } from "../lib/permissions";
 import { nowIso } from "../lib/time";
 import { budgetPeriodValidator } from "../lib/validators";
+import { requireFiniteAmount, requireMonthKey } from "./month";
 
 const createBudgetInputValidator = v.object({
   name: v.string(),
@@ -27,6 +28,21 @@ const recurringExpenseInputValidator = v.object({
   autoPay: v.optional(v.boolean()),
   accountId: v.optional(v.id("entityAccounts")),
   categoryId: v.id("entityExpenseCategories"),
+  notes: v.optional(v.string()),
+});
+
+const unplannedIncomeInputValidator = v.object({
+  month: v.string(),
+  name: v.string(),
+  amountCents: v.number(),
+  notes: v.optional(v.string()),
+});
+
+const creditCardReconciliationInputValidator = v.object({
+  month: v.string(),
+  accountId: v.id("entityAccounts"),
+  statementBalanceCents: v.number(),
+  ledgerBalanceCents: v.number(),
   notes: v.optional(v.string()),
 });
 
@@ -171,4 +187,131 @@ export const addRecurringExpense = authenticatedMutation({
     return lineId;
   },
 });
-export { removeIncomeSource, removeRecurringExpense } from "./removeMutations";
+
+/**
+ * Adds a month-specific one-off income source used in plan-vs-actual snapshots.
+ */
+export const addUnplannedIncomeSource = authenticatedMutation({
+  args: {
+    userId: v.id("users"),
+    budgetId: v.id("entityBudgets"),
+    input: unplannedIncomeInputValidator,
+  },
+  handler: async (ctx, args) => {
+    requirePositiveAmount(args.input.amountCents);
+    const month = requireMonthKey(args.input.month);
+    const budget = await requireBudgetMembership(ctx, args.userId, args.budgetId);
+    const now = nowIso();
+    const lineId = await ctx.db.insert("budgetUnplannedIncomeSources", {
+      budgetId: args.budgetId,
+      entityId: budget.entityId,
+      month,
+      name: args.input.name.trim(),
+      amountCents: args.input.amountCents,
+      notes: args.input.notes,
+      createdByUserId: args.userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await ctx.db.patch(args.budgetId, { updatedAt: now, updatedByUserId: args.userId });
+    await recordAuditEvent(ctx, {
+      actorUserId: args.userId,
+      entityId: budget.entityId,
+      action: "budget.unplanned_income_added",
+      target: lineId,
+      metadata: {
+        budgetId: String(args.budgetId),
+        unplannedIncomeSourceId: String(lineId),
+        month,
+        name: args.input.name.trim(),
+        amountCents: String(args.input.amountCents),
+      },
+    });
+
+    return lineId;
+  },
+});
+
+/**
+ * Saves (create/update) a monthly credit card reconciliation entry for one account.
+ */
+export const upsertCreditCardReconciliation = authenticatedMutation({
+  args: {
+    userId: v.id("users"),
+    budgetId: v.id("entityBudgets"),
+    input: creditCardReconciliationInputValidator,
+  },
+  handler: async (ctx, args) => {
+    const month = requireMonthKey(args.input.month);
+    requireFiniteAmount(args.input.statementBalanceCents, "Statement balance");
+    requireFiniteAmount(args.input.ledgerBalanceCents, "Ledger balance");
+    const budget = await requireBudgetMembership(ctx, args.userId, args.budgetId);
+    const account = await ctx.db.get(args.input.accountId);
+    if (!account || account.entityId !== budget.entityId) {
+      throw new Error("Selected account is not available for this entity.");
+    }
+
+    const now = nowIso();
+    const existing = await ctx.db
+      .query("budgetCreditCardReconciliations")
+      .withIndex("by_budgetId_month_accountId", (queryBuilder) =>
+        queryBuilder
+          .eq("budgetId", args.budgetId)
+          .eq("month", month)
+          .eq("accountId", args.input.accountId),
+      )
+      .first();
+
+    const reconciliationId =
+      existing?._id ??
+      (await ctx.db.insert("budgetCreditCardReconciliations", {
+        budgetId: args.budgetId,
+        entityId: budget.entityId,
+        month,
+        accountId: args.input.accountId,
+        statementBalanceCents: args.input.statementBalanceCents,
+        ledgerBalanceCents: args.input.ledgerBalanceCents,
+        notes: args.input.notes,
+        createdByUserId: args.userId,
+        createdAt: now,
+        updatedAt: now,
+      }));
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        statementBalanceCents: args.input.statementBalanceCents,
+        ledgerBalanceCents: args.input.ledgerBalanceCents,
+        notes: args.input.notes,
+        updatedAt: now,
+      });
+    }
+
+    await ctx.db.patch(args.budgetId, { updatedAt: now, updatedByUserId: args.userId });
+    await recordAuditEvent(ctx, {
+      actorUserId: args.userId,
+      entityId: budget.entityId,
+      action: existing
+        ? "budget.credit_card_reconciliation_updated"
+        : "budget.credit_card_reconciliation_added",
+      target: reconciliationId,
+      metadata: {
+        budgetId: String(args.budgetId),
+        creditCardReconciliationId: String(reconciliationId),
+        accountId: String(args.input.accountId),
+        month,
+        statementBalanceCents: String(args.input.statementBalanceCents),
+        ledgerBalanceCents: String(args.input.ledgerBalanceCents),
+      },
+    });
+
+    return reconciliationId;
+  },
+});
+
+export {
+  removeCreditCardReconciliation,
+  removeIncomeSource,
+  removeRecurringExpense,
+  removeUnplannedIncomeSource,
+} from "./removeMutations";

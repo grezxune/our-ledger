@@ -30,6 +30,7 @@ log:
   - 2026-03-04: Aligned with app-wide architecture guardrails that prohibit reintroducing route-level server-action mutation handlers.
   - 2026-03-04: Added recurring planned expense `autoPay` toggle support so users can mark expenses that are automatically pulled each cycle.
   - 2026-03-04: Updated modal behavior so successful budget edit/delete confirmations close active modals immediately.
+  - 2026-03-05: Expanded scope with month-level plan-vs-actual snapshots, account-level credit card reconciliation, and one-off unplanned income entries.
 ---
 
 ## Problem
@@ -54,6 +55,9 @@ Primary goals:
 - Support recurring planned expenses that are not required to be ledger transactions.
 - Support budget periods `weekly`, `monthly` (default), and `yearly`.
 - Show expected money left after all planned income and expenses are applied for the selected period.
+- Add monthly snapshot analytics comparing expected vs actual income/expense/remaining totals.
+- Support account-level credit card balance reconciliation per month.
+- Support one-off unplanned income entries that can be added for a specific month.
 - Preserve clear separation between planned budget items and actual transaction data.
 
 KPIs (first 90 days after release):
@@ -137,6 +141,39 @@ Core journeys:
 - Display values in entity currency.
 - Provide period-aware normalization for line items when item cadence differs from budget period.
 
+### Monthly Snapshot (Plan vs Actual)
+- Budget workspace must include a month selector (`YYYY-MM`) and month-level snapshot section.
+- Snapshot must calculate:
+  - expected monthly income (normalized planned income + month-scoped unplanned income)
+  - expected monthly recurring expenses (normalized recurring planned expenses)
+  - expected monthly remaining (`expected income - expected expenses`)
+  - actual monthly income/expenses/remaining from posted transactions in the selected month
+  - monthly variance values (`actual - expected`) for income, expenses, and remaining.
+- Snapshot must update reactively after relevant budget/transaction/monthly-adjustment changes.
+- Snapshot must not mutate ledger transactions.
+
+### Unplanned One-Off Income (Monthly)
+- Users can add and remove month-scoped one-off income sources from budget workspace.
+- Each unplanned income source requires:
+  - `month` (`YYYY-MM`)
+  - `name`
+  - `amount`
+- Optional field:
+  - `notes`
+- Month-scoped unplanned income must be included in expected monthly snapshot income totals.
+
+### Credit Card Reconciliation (Monthly)
+- Users can save and remove monthly reconciliation entries per account.
+- Reconciliation entry requires:
+  - `month` (`YYYY-MM`)
+  - `accountId`
+  - `statementBalanceCents`
+  - `ledgerBalanceCents`
+- Optional field:
+  - `notes`
+- Saving reconciliation for an existing (`budgetId`, `month`, `accountId`) tuple updates existing record (idempotent upsert behavior).
+- Snapshot should surface per-account reconciliation gap (`statement - ledger`) and total monthly gap.
+
 ### Sophisticated Budgeting Tooling (Execution Bar)
 - Budgeting UX must feel production-grade for both `household` and `business` entities.
 - Include high-signal budget diagnostics:
@@ -193,6 +230,7 @@ Core journeys:
 - Performance:
   - budget overview load <2.0s median on broadband.
   - item create/edit/delete roundtrip <500ms p50 for standard payloads.
+  - monthly snapshot query (plan vs actual + reconciliation aggregates) <700ms p50 for standard entities.
 - Accessibility:
   - keyboard-accessible forms and controls.
   - WCAG 2.2 AA contrast and semantics.
@@ -202,6 +240,35 @@ Core journeys:
   - deny-by-default authorization.
   - immutable audit trail for budget mutations.
   - no sensitive data in logs.
+
+## Security Architecture & Threat Model
+- Trust boundaries:
+  - Client UI is untrusted.
+  - Convex public functions are trusted only after server-side auth + membership checks.
+  - Auth.js identity and Convex actor identity must be canonicalized before budget access.
+- Primary abuse cases:
+  - Cross-entity budget read/write attempts via forged IDs.
+  - Unauthorized modification of monthly reconciliation entries.
+  - Injection of malformed month keys to read unintended date ranges.
+  - Sensitive financial metadata leakage through logs/audit payloads.
+- Required controls:
+  - Enforce membership checks for all monthly snapshot, unplanned income, and reconciliation reads/writes.
+  - Validate month key shape (`YYYY-MM`) and numeric inputs server-side.
+  - Enforce account ownership (`account.entityId === budget.entityId`) before reconciliation writes.
+  - Audit all create/update/delete operations for unplanned income and reconciliation objects.
+  - Keep logs free from secrets/tokens/raw auth material.
+
+## Performance Strategy & Budgets
+- Query design:
+  - Use entity and budget scoped indexes for monthly reads (`by_budgetId_month`, `by_entityId_date`).
+  - Prevent unbounded scans by always filtering snapshot queries with month start/end ranges.
+- Render strategy:
+  - Keep monthly snapshot in reactive query path with client-side month switching.
+  - Avoid full route reloads for month changes and line-item mutations.
+- Budgets:
+  - Monthly snapshot render target <2.0s median including initial budget page load.
+  - Month switch interaction target <400ms p50 query-to-render under normal network conditions.
+  - Mutation feedback target <500ms p50 with optimistic/non-blocking UI.
 
 ## Data & Integrations
 ### Convex Data Model (Proposed)
@@ -232,6 +299,23 @@ Core journeys:
   - `autoPay: v.optional(v.boolean())` (backward-compatible in schema, treated as `false` when omitted)
   - `category: v.optional(v.string())`
   - Indexes: `by_budgetId`, `by_entityId`, `by_entityId_category`
+- `budgetUnplannedIncomeSources`
+  - `budgetId: v.id("entityBudgets")`
+  - `entityId: v.id("entities")`
+  - `month: v.string()` (`YYYY-MM`)
+  - `name: v.string()`
+  - `amountCents: v.number()`
+  - `notes: v.optional(v.string())`
+  - Indexes: `by_budgetId_month`, `by_entityId_month`
+- `budgetCreditCardReconciliations`
+  - `budgetId: v.id("entityBudgets")`
+  - `entityId: v.id("entities")`
+  - `month: v.string()` (`YYYY-MM`)
+  - `accountId: v.id("entityAccounts")`
+  - `statementBalanceCents: v.number()`
+  - `ledgerBalanceCents: v.number()`
+  - `notes: v.optional(v.string())`
+  - Indexes: `by_budgetId_month`, `by_entityId_month`, `by_budgetId_month_accountId`
 
 ### Integration Boundaries
 - Auth.js: identity/session.
@@ -275,7 +359,7 @@ Core journeys:
    - Roll out to all entities.
    - Add docs/onboarding guidance.
 4. Phase 4: Post-launch enhancements
-   - Plan-vs-actual dashboards.
+   - Expanded scenario comparisons and trend diagnostics.
    - Optional templates by entity type.
 
 ## Next Steps

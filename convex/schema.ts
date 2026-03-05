@@ -128,6 +128,36 @@ export default defineSchema({
     .index("by_entityId", ["entityId"])
     .index("by_entityId_category", ["entityId", "category"]),
 
+  budgetUnplannedIncomeSources: defineTable({
+    budgetId: v.id("entityBudgets"),
+    entityId: v.id("entities"),
+    month: v.string(),
+    name: v.string(),
+    amountCents: v.number(),
+    notes: v.optional(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_budgetId_month", ["budgetId", "month"])
+    .index("by_entityId_month", ["entityId", "month"]),
+
+  budgetCreditCardReconciliations: defineTable({
+    budgetId: v.id("entityBudgets"),
+    entityId: v.id("entities"),
+    month: v.string(),
+    accountId: v.id("entityAccounts"),
+    statementBalanceCents: v.number(),
+    ledgerBalanceCents: v.number(),
+    notes: v.optional(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_budgetId_month", ["budgetId", "month"])
+    .index("by_entityId_month", ["entityId", "month"])
+    .index("by_budgetId_month_accountId", ["budgetId", "month", "accountId"]),
+
   entityAccounts: defineTable({
     entityId: v.id("entities"),
     name: v.string(),

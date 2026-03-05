@@ -1,6 +1,7 @@
 "use client";
 
 import { CirclePlus, Wallet } from "lucide-react";
+import { MonthlyBudgetSnapshot } from "@/components/entity/monthly-budget-snapshot";
 import { PlannedIncomeSources } from "@/components/entity/planned-income-sources";
 import { RecurringExpenseList } from "@/components/entity/recurring-expense-list";
 import { RecurringExpensePlanner } from "@/components/entity/recurring-expense-planner";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { InputField, SelectField } from "@/components/ui/field";
 import { BUDGET_PERIOD_OPTIONS } from "@/lib/domain/options";
-import type { EntityAccount, EntityBudget } from "@/lib/domain/types";
+import type { BudgetMonthlySnapshot, EntityAccount, EntityBudget } from "@/lib/domain/types";
 
 interface NamedEntityOption {
   id: string;
@@ -23,10 +24,13 @@ interface AccountOption {
 
 interface EntityBudgetLiveViewProps {
   currency: string;
+  snapshotMonth: string;
   budgets: EntityBudget[];
   accounts: EntityAccount[];
+  monthlySnapshot: BudgetMonthlySnapshot | undefined;
   institutions: NamedEntityOption[];
   expenseCategories: NamedEntityOption[];
+  setSnapshotMonthAction: (month: string) => void;
   createBudgetAction: (formData: FormData) => Promise<void>;
   addIncomeSourceAction: (formData: FormData) => Promise<void>;
   updateIncomeSourceAction: (incomeSourceId: string, formData: FormData) => Promise<void>;
@@ -34,6 +38,10 @@ interface EntityBudgetLiveViewProps {
   addRecurringExpenseAction: (formData: FormData) => Promise<void>;
   updateRecurringExpenseAction: (recurringExpenseId: string, formData: FormData) => Promise<void>;
   removeRecurringExpenseAction: (recurringExpenseId: string) => Promise<void>;
+  addUnplannedIncomeSourceAction: (formData: FormData) => Promise<void>;
+  removeUnplannedIncomeSourceAction: (unplannedIncomeSourceId: string) => Promise<void>;
+  upsertCreditCardReconciliationAction: (formData: FormData) => Promise<void>;
+  removeCreditCardReconciliationAction: (creditCardReconciliationId: string) => Promise<void>;
   createAccountAction: (formData: FormData) => Promise<AccountOption>;
   createInstitutionAction: (formData: FormData) => Promise<NamedEntityOption>;
   createExpenseCategoryAction: (formData: FormData) => Promise<NamedEntityOption>;
@@ -48,10 +56,13 @@ function formatCurrency(amountCents: number, currency: string): string {
  */
 export function EntityBudgetLiveView({
   currency,
+  snapshotMonth,
   budgets,
   accounts,
+  monthlySnapshot,
   institutions,
   expenseCategories,
+  setSnapshotMonthAction,
   createBudgetAction,
   addIncomeSourceAction,
   updateIncomeSourceAction,
@@ -59,6 +70,10 @@ export function EntityBudgetLiveView({
   addRecurringExpenseAction,
   updateRecurringExpenseAction,
   removeRecurringExpenseAction,
+  addUnplannedIncomeSourceAction,
+  removeUnplannedIncomeSourceAction,
+  upsertCreditCardReconciliationAction,
+  removeCreditCardReconciliationAction,
   createAccountAction,
   createInstitutionAction,
   createExpenseCategoryAction,
@@ -110,6 +125,18 @@ export function EntityBudgetLiveView({
           updateIncomeSourceAction={updateIncomeSourceAction}
         />
       </Card>
+
+      <MonthlyBudgetSnapshot
+        accounts={accounts}
+        addUnplannedIncomeSourceAction={addUnplannedIncomeSourceAction}
+        currency={currency}
+        month={snapshotMonth}
+        snapshot={monthlySnapshot}
+        removeCreditCardReconciliationAction={removeCreditCardReconciliationAction}
+        removeUnplannedIncomeSourceAction={removeUnplannedIncomeSourceAction}
+        setSnapshotMonthAction={setSnapshotMonthAction}
+        upsertCreditCardReconciliationAction={upsertCreditCardReconciliationAction}
+      />
 
       <div className="grid gap-5">
         <Card title="Recurring Planned Expenses">

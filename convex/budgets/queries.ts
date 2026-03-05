@@ -4,6 +4,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { requireMembership } from "../lib/permissions";
 import { calculateBudgetSummary } from "./math";
+import { requireMonthKey, toMonthDateRange } from "./month";
 
 function mapIncomeSource(item: Doc<"budgetIncomeSources">) {
   return {
@@ -31,6 +32,20 @@ function mapRecurringExpense(item: Doc<"budgetRecurringExpenses">) {
     cadence: item.cadence,
     autoPay: item.autoPay ?? false,
     category: item.category,
+    notes: item.notes,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  };
+}
+
+function mapUnplannedIncomeSource(item: Doc<"budgetUnplannedIncomeSources">) {
+  return {
+    id: item._id,
+    budgetId: item.budgetId,
+    entityId: item.entityId,
+    month: item.month,
+    name: item.name,
+    amountCents: item.amountCents,
     notes: item.notes,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
@@ -124,5 +139,123 @@ export const getBudgetById = authenticatedQuery({
 
     await requireMembership(ctx, args.userId, budget.entityId);
     return loadBudgetDetails(ctx, budget);
+  },
+});
+
+/**
+ * Returns monthly plan-vs-actual totals, one-off incomes, and card reconciliation entries.
+ */
+export const getMonthlySnapshot = authenticatedQuery({
+  args: {
+    userId: v.id("users"),
+    budgetId: v.id("entityBudgets"),
+    month: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const budget = await ctx.db.get(args.budgetId);
+    if (!budget) {
+      throw new Error("Budget not found.");
+    }
+
+    const month = requireMonthKey(args.month);
+    await requireMembership(ctx, args.userId, budget.entityId);
+    const { start, endExclusive } = toMonthDateRange(month);
+
+    const [plannedIncomes, plannedExpenses, unplannedIncomeSources, reconciliations, transactions] = await Promise.all([
+      ctx.db.query("budgetIncomeSources").withIndex("by_budgetId", (queryBuilder) => queryBuilder.eq("budgetId", args.budgetId)).collect(),
+      ctx.db
+        .query("budgetRecurringExpenses")
+        .withIndex("by_budgetId", (queryBuilder) => queryBuilder.eq("budgetId", args.budgetId))
+        .collect(),
+      ctx.db
+        .query("budgetUnplannedIncomeSources")
+        .withIndex("by_budgetId_month", (queryBuilder) => queryBuilder.eq("budgetId", args.budgetId).eq("month", month))
+        .collect(),
+      ctx.db
+        .query("budgetCreditCardReconciliations")
+        .withIndex("by_budgetId_month", (queryBuilder) => queryBuilder.eq("budgetId", args.budgetId).eq("month", month))
+        .collect(),
+      ctx.db
+        .query("transactions")
+        .withIndex("by_entityId_date", (queryBuilder) =>
+          queryBuilder.eq("entityId", budget.entityId).gte("date", start).lt("date", endExclusive),
+        )
+        .collect(),
+    ]);
+
+    const baseMonthly = calculateBudgetSummary({
+      period: "monthly",
+      incomes: plannedIncomes.map((item) => ({ amountCents: item.amountCents, cadence: item.cadence })),
+      expenses: plannedExpenses.map((item) => ({ amountCents: item.amountCents, cadence: item.cadence })),
+    });
+    const unplannedIncomeCents = unplannedIncomeSources.reduce((sum, item) => sum + item.amountCents, 0);
+    const expectedIncomeCents = baseMonthly.projectedIncomeCents + unplannedIncomeCents;
+    const expectedExpenseCents = baseMonthly.projectedExpenseCents;
+    const expectedRemainingCents = expectedIncomeCents - expectedExpenseCents;
+
+    const postedTransactions = transactions.filter((item) => item.status === "posted");
+    const actualIncomeCents = postedTransactions.reduce(
+      (sum, item) => (item.type === "income" ? sum + item.amountCents : sum),
+      0,
+    );
+    const actualExpenseCents = postedTransactions.reduce(
+      (sum, item) => (item.type === "expense" ? sum + item.amountCents : sum),
+      0,
+    );
+    const actualRemainingCents = actualIncomeCents - actualExpenseCents;
+    const incomeVarianceCents = actualIncomeCents - expectedIncomeCents;
+    const expenseVarianceCents = actualExpenseCents - expectedExpenseCents;
+    const remainingVarianceCents = actualRemainingCents - expectedRemainingCents;
+
+    const reconciliationAccountIds = Array.from(new Set(reconciliations.map((item) => item.accountId)));
+    const reconciliationAccounts = await Promise.all(
+      reconciliationAccountIds.map((accountId) => ctx.db.get(accountId)),
+    );
+    const accountMap = new Map(
+      reconciliationAccounts
+        .filter((account): account is NonNullable<typeof account> => Boolean(account))
+        .map((account) => [account._id, account]),
+    );
+
+    const mappedReconciliations = reconciliations
+      .map((item) => ({
+        id: item._id,
+        budgetId: item.budgetId,
+        entityId: item.entityId,
+        month: item.month,
+        accountId: item.accountId,
+        accountName: accountMap.get(item.accountId)?.name || "Account removed",
+        statementBalanceCents: item.statementBalanceCents,
+        ledgerBalanceCents: item.ledgerBalanceCents,
+        reconciliationGapCents: item.statementBalanceCents - item.ledgerBalanceCents,
+        notes: item.notes,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      }))
+      .sort((left, right) => left.accountName.localeCompare(right.accountName));
+    const totalReconciliationGapCents = mappedReconciliations.reduce(
+      (sum, item) => sum + item.reconciliationGapCents,
+      0,
+    );
+
+    return {
+      month,
+      expectedIncomeCents,
+      expectedExpenseCents,
+      expectedRemainingCents,
+      actualIncomeCents,
+      actualExpenseCents,
+      actualRemainingCents,
+      incomeVarianceCents,
+      expenseVarianceCents,
+      remainingVarianceCents,
+      unplannedIncomeCents,
+      unplannedIncomeSources: unplannedIncomeSources
+        .map(mapUnplannedIncomeSource)
+        .sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
+      creditCardReconciliations: mappedReconciliations,
+      reconciledCardCount: mappedReconciliations.length,
+      totalReconciliationGapCents,
+    };
   },
 });
