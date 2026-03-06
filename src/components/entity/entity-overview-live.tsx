@@ -66,7 +66,7 @@ export function EntityOverviewLive({ session, entityId }: EntityOverviewLiveProp
   return (
     <EntityShell entity={entity} membership={membership} session={session}>
       <div className="grid gap-5 xl:grid-cols-3">
-        <Card title="Budget Snapshot" className="xl:col-span-1">
+        <Card title="Meeting Snapshot" className="xl:col-span-1">
           {activeBudget ? (
             <>
               <p className="text-sm text-foreground/75">
@@ -76,20 +76,20 @@ export function EntityOverviewLive({ session, entityId }: EntityOverviewLiveProp
               <p className="text-2xl font-semibold">
                 {formatCurrency(activeBudget.summary.expectedRemainingCents, entity.currency)}
               </p>
-              <Button asChild ariaLabel="Open budget section" className="mt-3 rounded-lg px-3 py-1" variant="secondary">
-                <Link href={`/entity/${entityId}/budget`}>
+              <Button asChild ariaLabel="Open snapshots section" className="mt-3 rounded-lg px-3 py-1" variant="secondary">
+                <Link href={`/entity/${entityId}/snapshot`}>
                   <Wallet aria-hidden className="size-4" />
-                  Open Budget
+                  Open Snapshots
                 </Link>
               </Button>
             </>
           ) : (
             <>
               <p className="text-sm text-foreground/70">No budget created yet.</p>
-              <Button asChild ariaLabel="Create a budget" className="mt-3 rounded-lg px-3 py-1" variant="secondary">
-                <Link href={`/entity/${entityId}/budget`}>
+              <Button asChild ariaLabel="Open snapshots section" className="mt-3 rounded-lg px-3 py-1" variant="secondary">
+                <Link href={`/entity/${entityId}/snapshot`}>
                   <Wallet aria-hidden className="size-4" />
-                  Create Budget
+                  Open Snapshots
                 </Link>
               </Button>
             </>

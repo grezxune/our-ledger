@@ -1,3 +1,3 @@
 # Entity Routes
 
-App Router entity flows for create, detail, update, budget, transactions, members, and manage states.
+App Router entity flows for create, detail, update, budget, snapshot, transactions, members, and manage states.

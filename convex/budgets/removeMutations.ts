@@ -100,8 +100,68 @@ export const removeUnplannedIncomeSource = authenticatedMutation({
         budgetId: String(item.budgetId),
         unplannedIncomeSourceId: String(item._id),
         month: item.month,
+        accountId: item.accountId ? String(item.accountId) : "",
         name: item.name,
         amountCents: String(item.amountCents),
+        notes: item.notes || "",
+      },
+    });
+  },
+});
+
+export const removeOneOffExpenseEntry = authenticatedMutation({
+  args: {
+    userId: v.id("users"),
+    oneOffExpenseEntryId: v.id("budgetOneOffExpenseEntries"),
+  },
+  handler: async (ctx, args) => {
+    const item = await ctx.db.get(args.oneOffExpenseEntryId);
+    if (!item) throw new Error("One-off expense entry not found.");
+
+    await requireMembership(ctx, args.userId, item.entityId);
+    await ctx.db.delete(item._id);
+    await touchBudget(ctx, item.budgetId, args.userId);
+    await recordAuditEvent(ctx, {
+      actorUserId: args.userId,
+      entityId: item.entityId,
+      action: "budget.one_off_expense_removed",
+      target: item._id,
+      metadata: {
+        budgetId: String(item.budgetId),
+        oneOffExpenseEntryId: String(item._id),
+        month: item.month,
+        accountId: String(item.accountId),
+        name: item.name,
+        amountCents: String(item.amountCents),
+        notes: item.notes || "",
+      },
+    });
+  },
+});
+
+export const removeMonthlyAccountBalance = authenticatedMutation({
+  args: {
+    userId: v.id("users"),
+    accountBalanceId: v.id("budgetMonthlyAccountBalances"),
+  },
+  handler: async (ctx, args) => {
+    const item = await ctx.db.get(args.accountBalanceId);
+    if (!item) throw new Error("Monthly account balance not found.");
+
+    await requireMembership(ctx, args.userId, item.entityId);
+    await ctx.db.delete(item._id);
+    await touchBudget(ctx, item.budgetId, args.userId);
+    await recordAuditEvent(ctx, {
+      actorUserId: args.userId,
+      entityId: item.entityId,
+      action: "budget.account_balance_removed",
+      target: item._id,
+      metadata: {
+        budgetId: String(item.budgetId),
+        accountBalanceId: String(item._id),
+        month: item.month,
+        accountId: String(item.accountId),
+        balanceCents: String(item.balanceCents),
         notes: item.notes || "",
       },
     });

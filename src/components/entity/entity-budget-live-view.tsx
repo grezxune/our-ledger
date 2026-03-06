@@ -24,6 +24,7 @@ interface AccountOption {
 
 interface EntityBudgetLiveViewProps {
   currency: string;
+  mode: "full" | "snapshot";
   snapshotMonth: string;
   budgets: EntityBudget[];
   accounts: EntityAccount[];
@@ -40,6 +41,10 @@ interface EntityBudgetLiveViewProps {
   removeRecurringExpenseAction: (recurringExpenseId: string) => Promise<void>;
   addUnplannedIncomeSourceAction: (formData: FormData) => Promise<void>;
   removeUnplannedIncomeSourceAction: (unplannedIncomeSourceId: string) => Promise<void>;
+  addOneOffExpenseEntryAction: (formData: FormData) => Promise<void>;
+  removeOneOffExpenseEntryAction: (oneOffExpenseEntryId: string) => Promise<void>;
+  upsertMonthlyAccountBalanceAction: (formData: FormData) => Promise<void>;
+  removeMonthlyAccountBalanceAction: (accountBalanceId: string) => Promise<void>;
   upsertCreditCardReconciliationAction: (formData: FormData) => Promise<void>;
   removeCreditCardReconciliationAction: (creditCardReconciliationId: string) => Promise<void>;
   createAccountAction: (formData: FormData) => Promise<AccountOption>;
@@ -56,6 +61,7 @@ function formatCurrency(amountCents: number, currency: string): string {
  */
 export function EntityBudgetLiveView({
   currency,
+  mode,
   snapshotMonth,
   budgets,
   accounts,
@@ -72,6 +78,10 @@ export function EntityBudgetLiveView({
   removeRecurringExpenseAction,
   addUnplannedIncomeSourceAction,
   removeUnplannedIncomeSourceAction,
+  addOneOffExpenseEntryAction,
+  removeOneOffExpenseEntryAction,
+  upsertMonthlyAccountBalanceAction,
+  removeMonthlyAccountBalanceAction,
   upsertCreditCardReconciliationAction,
   removeCreditCardReconciliationAction,
   createAccountAction,
@@ -94,6 +104,26 @@ export function EntityBudgetLiveView({
           </div>
         </form>
       </Card>
+    );
+  }
+
+  if (mode === "snapshot") {
+    return (
+      <MonthlyBudgetSnapshot
+        accounts={accounts}
+        addOneOffExpenseEntryAction={addOneOffExpenseEntryAction}
+        addUnplannedIncomeSourceAction={addUnplannedIncomeSourceAction}
+        currency={currency}
+        month={snapshotMonth}
+        removeMonthlyAccountBalanceAction={removeMonthlyAccountBalanceAction}
+        removeOneOffExpenseEntryAction={removeOneOffExpenseEntryAction}
+        snapshot={monthlySnapshot}
+        removeCreditCardReconciliationAction={removeCreditCardReconciliationAction}
+        removeUnplannedIncomeSourceAction={removeUnplannedIncomeSourceAction}
+        setSnapshotMonthAction={setSnapshotMonthAction}
+        upsertMonthlyAccountBalanceAction={upsertMonthlyAccountBalanceAction}
+        upsertCreditCardReconciliationAction={upsertCreditCardReconciliationAction}
+      />
     );
   }
 
@@ -129,12 +159,16 @@ export function EntityBudgetLiveView({
       <MonthlyBudgetSnapshot
         accounts={accounts}
         addUnplannedIncomeSourceAction={addUnplannedIncomeSourceAction}
+        addOneOffExpenseEntryAction={addOneOffExpenseEntryAction}
         currency={currency}
         month={snapshotMonth}
+        removeMonthlyAccountBalanceAction={removeMonthlyAccountBalanceAction}
+        removeOneOffExpenseEntryAction={removeOneOffExpenseEntryAction}
         snapshot={monthlySnapshot}
         removeCreditCardReconciliationAction={removeCreditCardReconciliationAction}
         removeUnplannedIncomeSourceAction={removeUnplannedIncomeSourceAction}
         setSnapshotMonthAction={setSnapshotMonthAction}
+        upsertMonthlyAccountBalanceAction={upsertMonthlyAccountBalanceAction}
         upsertCreditCardReconciliationAction={upsertCreditCardReconciliationAction}
       />
 

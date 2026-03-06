@@ -31,6 +31,7 @@ log:
   - 2026-03-04: Added recurring planned expense `autoPay` toggle support so users can mark expenses that are automatically pulled each cycle.
   - 2026-03-04: Updated modal behavior so successful budget edit/delete confirmations close active modals immediately.
   - 2026-03-05: Expanded scope with month-level plan-vs-actual snapshots, account-level credit card reconciliation, and one-off unplanned income entries.
+  - 2026-03-05: Promoted snapshots to a first-class entity section with dedicated navigation/route and added month-level account balances plus one-off expense capture by account.
 ---
 
 ## Problem
@@ -143,11 +144,12 @@ Core journeys:
 
 ### Monthly Snapshot (Plan vs Actual)
 - Budget workspace must include a month selector (`YYYY-MM`) and month-level snapshot section.
+- Entity navigation must expose snapshots as a first-class route (`/entity/[id]/snapshot`) optimized for recurring financial meetings.
 - Snapshot must calculate:
-  - expected monthly income (normalized planned income + month-scoped unplanned income)
+  - expected monthly income (normalized planned income)
   - expected monthly recurring expenses (normalized recurring planned expenses)
   - expected monthly remaining (`expected income - expected expenses`)
-  - actual monthly income/expenses/remaining from posted transactions in the selected month
+  - actual monthly income/expenses/remaining from posted transactions plus month-scoped one-off adjustments
   - monthly variance values (`actual - expected`) for income, expenses, and remaining.
 - Snapshot must update reactively after relevant budget/transaction/monthly-adjustment changes.
 - Snapshot must not mutate ledger transactions.
@@ -160,7 +162,29 @@ Core journeys:
   - `amount`
 - Optional field:
   - `notes`
-- Month-scoped unplanned income must be included in expected monthly snapshot income totals.
+- Month-scoped one-off income is tracked with account attribution and must be included in actual monthly income totals.
+
+### One-Off Expenses by Account (Monthly)
+- Users can add and remove month-scoped one-off expense entries tied to an account.
+- Each one-off expense entry requires:
+  - `month` (`YYYY-MM`)
+  - `accountId`
+  - `name`
+  - `amount`
+- Optional field:
+  - `notes`
+- One-off expense entries must be included in actual monthly expense totals and variance calculations.
+
+### Monthly Account Balance Capture
+- Users can save and remove monthly account balance entries for each account.
+- Each balance entry requires:
+  - `month` (`YYYY-MM`)
+  - `accountId`
+  - `balanceCents`
+- Optional field:
+  - `notes`
+- Saving a balance for an existing (`budgetId`, `month`, `accountId`) tuple updates existing record (idempotent upsert).
+- Snapshot should show total account balance across captured accounts for the selected month.
 
 ### Credit Card Reconciliation (Monthly)
 - Users can save and remove monthly reconciliation entries per account.
@@ -303,10 +327,28 @@ Core journeys:
   - `budgetId: v.id("entityBudgets")`
   - `entityId: v.id("entities")`
   - `month: v.string()` (`YYYY-MM`)
+  - `accountId: v.optional(v.id("entityAccounts"))`
   - `name: v.string()`
   - `amountCents: v.number()`
   - `notes: v.optional(v.string())`
   - Indexes: `by_budgetId_month`, `by_entityId_month`
+- `budgetOneOffExpenseEntries`
+  - `budgetId: v.id("entityBudgets")`
+  - `entityId: v.id("entities")`
+  - `month: v.string()` (`YYYY-MM`)
+  - `accountId: v.id("entityAccounts")`
+  - `name: v.string()`
+  - `amountCents: v.number()`
+  - `notes: v.optional(v.string())`
+  - Indexes: `by_budgetId_month`, `by_entityId_month`, `by_budgetId_month_accountId`
+- `budgetMonthlyAccountBalances`
+  - `budgetId: v.id("entityBudgets")`
+  - `entityId: v.id("entities")`
+  - `month: v.string()` (`YYYY-MM`)
+  - `accountId: v.id("entityAccounts")`
+  - `balanceCents: v.number()`
+  - `notes: v.optional(v.string())`
+  - Indexes: `by_budgetId_month`, `by_entityId_month`, `by_budgetId_month_accountId`
 - `budgetCreditCardReconciliations`
   - `budgetId: v.id("entityBudgets")`
   - `entityId: v.id("entities")`

@@ -120,8 +120,37 @@ export interface BudgetUnplannedIncomeSource {
   budgetId: string;
   entityId: string;
   month: string;
+  accountId?: string;
+  accountName?: string;
   name: string;
   amountCents: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BudgetOneOffExpenseEntry {
+  id: string;
+  budgetId: string;
+  entityId: string;
+  month: string;
+  accountId: string;
+  accountName: string;
+  name: string;
+  amountCents: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BudgetMonthlyAccountBalance {
+  id: string;
+  budgetId: string;
+  entityId: string;
+  month: string;
+  accountId: string;
+  accountName: string;
+  balanceCents: number;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -174,10 +203,14 @@ export interface BudgetMonthlySnapshot {
   expenseVarianceCents: number;
   remainingVarianceCents: number;
   unplannedIncomeCents: number;
+  oneOffExpenseCents: number;
   unplannedIncomeSources: BudgetUnplannedIncomeSource[];
+  oneOffExpenseEntries: BudgetOneOffExpenseEntry[];
+  accountBalances: BudgetMonthlyAccountBalance[];
   creditCardReconciliations: BudgetCreditCardReconciliation[];
   reconciledCardCount: number;
   totalReconciliationGapCents: number;
+  totalAccountBalanceCents: number;
 }
 
 export interface EntityAccount {

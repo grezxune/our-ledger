@@ -132,6 +132,7 @@ export default defineSchema({
     budgetId: v.id("entityBudgets"),
     entityId: v.id("entities"),
     month: v.string(),
+    accountId: v.optional(v.id("entityAccounts")),
     name: v.string(),
     amountCents: v.number(),
     notes: v.optional(v.string()),
@@ -141,6 +142,37 @@ export default defineSchema({
   })
     .index("by_budgetId_month", ["budgetId", "month"])
     .index("by_entityId_month", ["entityId", "month"]),
+
+  budgetOneOffExpenseEntries: defineTable({
+    budgetId: v.id("entityBudgets"),
+    entityId: v.id("entities"),
+    month: v.string(),
+    accountId: v.id("entityAccounts"),
+    name: v.string(),
+    amountCents: v.number(),
+    notes: v.optional(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_budgetId_month", ["budgetId", "month"])
+    .index("by_entityId_month", ["entityId", "month"])
+    .index("by_budgetId_month_accountId", ["budgetId", "month", "accountId"]),
+
+  budgetMonthlyAccountBalances: defineTable({
+    budgetId: v.id("entityBudgets"),
+    entityId: v.id("entities"),
+    month: v.string(),
+    accountId: v.id("entityAccounts"),
+    balanceCents: v.number(),
+    notes: v.optional(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_budgetId_month", ["budgetId", "month"])
+    .index("by_entityId_month", ["entityId", "month"])
+    .index("by_budgetId_month_accountId", ["budgetId", "month", "accountId"]),
 
   budgetCreditCardReconciliations: defineTable({
     budgetId: v.id("entityBudgets"),

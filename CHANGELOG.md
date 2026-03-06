@@ -3,8 +3,10 @@
 ## [0.2.64] - 2026-03-05
 
 - Added month-level budget snapshots with plan-vs-actual totals (expected income/expenses/remaining vs posted transaction actuals) directly in the budget workspace.
-- Added month-scoped unplanned one-off income support, including create/remove flows and snapshot inclusion in expected monthly income.
+- Added month-scoped unplanned one-off income support with account attribution, including create/remove flows and snapshot inclusion in actual monthly income.
 - Added month-scoped credit card reconciliation support with per-account statement/ledger balance entries, reconciliation gap metrics, and remove flows.
+- Added month-scoped one-off expense capture by account and monthly account balance capture (with upsert/remove flows) so financial-meeting snapshots can include real account state.
+- Added a dedicated first-class entity snapshots route (`/entity/[id]/snapshot`) and entity navigation entry for cadence-based finance meetings.
 - Added new Convex schema tables + budget query/mutation coverage for monthly snapshots, unplanned income, and credit card reconciliations with audit events.
 - Added unit/integration coverage for new monthly helpers and the monthly budget snapshot UI.
 

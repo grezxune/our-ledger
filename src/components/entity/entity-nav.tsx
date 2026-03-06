@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType } from "react";
 import {
+  CalendarRange,
   LayoutDashboard,
   Menu,
   ReceiptText,
@@ -52,6 +53,7 @@ export function EntityNav({ entityId, role }: EntityNavProps) {
   const links = useMemo<NavLinkItem[]>(() => {
     const base: NavLinkItem[] = [
       { href: `/entity/${entityId}`, label: "Overview", icon: LayoutDashboard, match: "exact" },
+      { href: `/entity/${entityId}/snapshot`, label: "Snapshots", icon: CalendarRange, match: "prefix" },
       { href: `/entity/${entityId}/budget`, label: "Budget", icon: Wallet, match: "prefix" },
       { href: `/entity/${entityId}/transactions`, label: "Transactions", icon: ReceiptText, match: "prefix" },
       { href: `/entity/${entityId}/members`, label: "Members", icon: Users, match: "prefix" },

@@ -29,6 +29,8 @@ const METADATA_REFERENCE_TABLES: Record<string, TableNames> = {
   incomeSourceId: "budgetIncomeSources",
   recurringExpenseId: "budgetRecurringExpenses",
   unplannedIncomeSourceId: "budgetUnplannedIncomeSources",
+  oneOffExpenseEntryId: "budgetOneOffExpenseEntries",
+  accountBalanceId: "budgetMonthlyAccountBalances",
   creditCardReconciliationId: "budgetCreditCardReconciliations",
   transactionId: "transactions",
   sourceTransactionId: "transactions",
@@ -46,6 +48,8 @@ function resolveTargetTable(action: string): TableNames | null {
   if (action.startsWith("budget.income_source_")) return "budgetIncomeSources";
   if (action.startsWith("budget.recurring_expense_")) return "budgetRecurringExpenses";
   if (action.startsWith("budget.unplanned_income_")) return "budgetUnplannedIncomeSources";
+  if (action.startsWith("budget.one_off_expense_")) return "budgetOneOffExpenseEntries";
+  if (action.startsWith("budget.account_balance_")) return "budgetMonthlyAccountBalances";
   if (action.startsWith("budget.credit_card_reconciliation_")) return "budgetCreditCardReconciliations";
   if (action.startsWith("invitation.")) return "invitations";
   if (action.startsWith("document.")) return "documents";

@@ -12,6 +12,7 @@ describe("entity nav", () => {
     const html = renderToStaticMarkup(<EntityNav entityId="entity_1" role="owner" />);
 
     expect(html).toContain("Budget");
+    expect(html).toContain("Snapshots");
     expect(html).toContain("Transactions");
     expect(html).toContain("Members");
     expect(html).toContain("aria-label=\"Open entity section menu\"");

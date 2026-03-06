@@ -3,6 +3,8 @@
 import { Card } from "@/components/ui/card";
 import { InputField } from "@/components/ui/field";
 import { CreditCardReconciliationList } from "@/components/entity/credit-card-reconciliation-list";
+import { MonthlyAccountBalances } from "@/components/entity/monthly-account-balances";
+import { MonthlyOneOffExpenseEntries } from "@/components/entity/monthly-one-off-expense-entries";
 import { MonthlyUnplannedIncomeSources } from "@/components/entity/monthly-unplanned-income-sources";
 import { formatMonthLabel } from "@/lib/budget/monthly";
 import type { BudgetMonthlySnapshot, EntityAccount } from "@/lib/domain/types";
@@ -15,6 +17,10 @@ interface MonthlyBudgetSnapshotProps {
   setSnapshotMonthAction: (month: string) => void;
   addUnplannedIncomeSourceAction: (formData: FormData) => Promise<void>;
   removeUnplannedIncomeSourceAction: (unplannedIncomeSourceId: string) => Promise<void>;
+  addOneOffExpenseEntryAction: (formData: FormData) => Promise<void>;
+  removeOneOffExpenseEntryAction: (oneOffExpenseEntryId: string) => Promise<void>;
+  upsertMonthlyAccountBalanceAction: (formData: FormData) => Promise<void>;
+  removeMonthlyAccountBalanceAction: (accountBalanceId: string) => Promise<void>;
   upsertCreditCardReconciliationAction: (formData: FormData) => Promise<void>;
   removeCreditCardReconciliationAction: (creditCardReconciliationId: string) => Promise<void>;
 }
@@ -34,6 +40,10 @@ export function MonthlyBudgetSnapshot({
   setSnapshotMonthAction,
   addUnplannedIncomeSourceAction,
   removeUnplannedIncomeSourceAction,
+  addOneOffExpenseEntryAction,
+  removeOneOffExpenseEntryAction,
+  upsertMonthlyAccountBalanceAction,
+  removeMonthlyAccountBalanceAction,
   upsertCreditCardReconciliationAction,
   removeCreditCardReconciliationAction,
 }: MonthlyBudgetSnapshotProps) {
@@ -91,6 +101,9 @@ export function MonthlyBudgetSnapshot({
         <div className="rounded-xl border border-line bg-surface p-3">
           <p className="text-xs uppercase tracking-[0.08em] text-foreground/70">Actual Expenses</p>
           <p className="mt-1 text-base font-semibold">{formatCurrency(snapshot.actualExpenseCents, currency)}</p>
+          <p className="mt-1 text-xs text-foreground/70">
+            Includes one-off expenses: {formatCurrency(snapshot.oneOffExpenseCents, currency)}
+          </p>
         </div>
         <div className="rounded-xl border border-line bg-surface p-3">
           <p className="text-xs uppercase tracking-[0.08em] text-foreground/70">Actual Remaining</p>
@@ -105,15 +118,35 @@ export function MonthlyBudgetSnapshot({
         <p>
           Total reconciliation gap: {formatCurrency(snapshot.totalReconciliationGapCents, currency)} ({snapshot.reconciledCardCount} account(s))
         </p>
+        <p>Total account balance: {formatCurrency(snapshot.totalAccountBalanceCents, currency)}</p>
       </div>
 
       <div className="mt-4 grid gap-4">
+        <MonthlyAccountBalances
+          accountBalances={snapshot.accountBalances}
+          accounts={accounts}
+          currency={currency}
+          month={month}
+          removeMonthlyAccountBalanceAction={removeMonthlyAccountBalanceAction}
+          upsertMonthlyAccountBalanceAction={upsertMonthlyAccountBalanceAction}
+        />
+
         <MonthlyUnplannedIncomeSources
+          accounts={accounts}
           addUnplannedIncomeSourceAction={addUnplannedIncomeSourceAction}
           currency={currency}
           incomeSources={snapshot.unplannedIncomeSources}
           month={month}
           removeUnplannedIncomeSourceAction={removeUnplannedIncomeSourceAction}
+        />
+
+        <MonthlyOneOffExpenseEntries
+          accounts={accounts}
+          addOneOffExpenseEntryAction={addOneOffExpenseEntryAction}
+          currency={currency}
+          expenseEntries={snapshot.oneOffExpenseEntries}
+          month={month}
+          removeOneOffExpenseEntryAction={removeOneOffExpenseEntryAction}
         />
 
         <CreditCardReconciliationList
